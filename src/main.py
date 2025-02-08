@@ -24,12 +24,20 @@ async def concatenate_wavs(
 ):
     try:
         audio_segments = []
+        c = 0
         for file in files:
             file_bytes = await file.read()
             audio = AudioSegment.from_wav(io.BytesIO(file_bytes))
+            # 16kHz sample rate, 16-bit depth, 1 channel.
+            audio = audio.set_frame_rate(16000).set_channels(1).set_sample_width(2)
+            audio.export(f"file{c}.wav", format="wav")
             audio_segments.append(audio)
+            print("NEw add")
+            c+=1
 
         combined_audio = sum(audio_segments[1:], audio_segments[0])
+        
+        combined_audio.export("file.wav", format="wav")
 
         buffer = io.BytesIO()
         combined_audio.export(buffer, format="wav")
@@ -43,8 +51,7 @@ async def concatenate_wavs(
             "POST", SARVAM_URL, headers=headers, data=payload, files=files
         )
         logger.debug(resp.json())
-
-        # combined_audio.export("file.wav", format="wav")
+        # print(resp.json())
         return Response(
             content=resp.content,
             status_code=resp.status_code,
